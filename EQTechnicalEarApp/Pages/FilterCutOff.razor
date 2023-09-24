@@ -1,0 +1,44 @@
+﻿@page "/filtercutoff"
+@using Plugin.Maui.Audio;
+@inject IAudioManager AudioManager;
+@inject IFilePicker FilePicker;
+
+<h1>Filter cut-off training</h1>
+
+<p role="status">File name: @AudioFileName</p>
+<p role="status">File type: @AudioFileType</p>
+
+<button class="btn btn-primary" @onclick="PlayAudio">Play audio</button>
+<button @onclick="PickFile">Select file</button>
+
+@code {
+    private string AudioFileName;
+    private string AudioFileType;
+    private IAudioPlayer filePickerPlayer;
+
+    private void PlayAudio()
+    {
+        if (filePickerPlayer != null)
+        {
+            filePickerPlayer.Play();
+        }
+    }
+
+    private async Task PickFile()
+    {
+        var result = await FilePicker.PickAsync(new PickOptions()
+        {
+            PickerTitle = "Please select audio file",
+        });
+
+        if (result != null)
+        {   
+            using var stream = await result.OpenReadAsync();
+
+            filePickerPlayer = AudioManager.CreatePlayer(stream);
+
+            AudioFileName = result.FileName;
+            AudioFileType = result.ContentType;
+        }
+    }
+}

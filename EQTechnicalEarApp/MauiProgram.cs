@@ -1,5 +1,6 @@
 ﻿using EQTechnicalEarApp.Data;
 using Microsoft.Extensions.Logging;
+using Plugin.Maui.Audio;
 
 namespace EQTechnicalEarApp
 {
@@ -23,6 +24,8 @@ namespace EQTechnicalEarApp
 #endif
 
             builder.Services.AddSingleton<WeatherForecastService>();
+            builder.Services.AddSingleton(AudioManager.Current);
+            builder.Services.AddSingleton(FilePicker.Default);
 
             return builder.Build();
         }
