@@ -1,0 +1,134 @@
+﻿@page "/practice"
+
+@using NAudio.Dsp;
+@using NAudio.Wave;
+@using NAudio.Wave.SampleProviders;
+@using NAudio.Extras;
+
+<div class="form-check">
+    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" @onchange="ApplyBoost530Hz">
+    <label class="form-check-label" for="flexRadioDefault1">
+        Boost 12db at 530Hz
+    </label>
+</div>
+<div class="form-check">
+    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" @onchange="ApplyBoost800Hz">
+    <label class="form-check-label" for="flexRadioDefault2">
+        Boost 12db at 800Hz
+    </label>
+</div>
+
+<div> 
+    <button class="btn btn-primary" @onclick="StartRealtimeProcessing">Start</button>
+</div>
+
+<div> 
+    <button class="btn btn-primary" @onclick="StopPlayback">Stop</button>
+</div>
+
+@code {
+    private Stream audioStream;
+    private BufferedWaveProvider bufferedWaveProvider;
+    private IWavePlayer waveOutDevice;
+    private Equalizer equalizer;
+    private EqualizerBand[] bands;
+    private VolumeWaveProvider16 volumeProvider;
+    private bool isStopped = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            audioStream = await FileSystem.OpenAppPackageFileAsync("sample.wav");
+        }
+        catch (FileNotFoundException ex)
+        {
+        }
+    }
+
+    public void StartRealtimeProcessing()
+    {
+        if (audioStream == null || !audioStream.CanRead)
+        {
+            audioStream = Task.Run(async () => await FileSystem.OpenAppPackageFileAsync("sample.wav")).Result;
+        }
+        audioStream.Position = 0;
+
+        var wavReader = new WaveFileReader(audioStream);
+        var sampleChannel = new SampleChannel(wavReader);
+
+        InitializeEqualizer(sampleChannel);
+
+        // Set up the BufferedWaveProvider
+        bufferedWaveProvider = new BufferedWaveProvider(wavReader.WaveFormat);
+
+        volumeProvider = new VolumeWaveProvider16(equalizer.ToWaveProvider16());
+
+        // WaveOutEvent is a suitable output device on most systems
+        waveOutDevice = new WaveOutEvent();
+        waveOutDevice.PlaybackStopped += WaveOutDevice_PlaybackStopped;
+
+        waveOutDevice.Init(volumeProvider);
+
+        volumeProvider.Volume = 0.7f;
+        waveOutDevice.Play();
+        isStopped = false;
+    }
+
+    public void SetVolume(float volume) // volume should be between 0.0f (silent) and 1.0f (full volume)
+    {
+        volumeProvider.Volume = volume;
+    }
+
+    private void WaveOutDevice_PlaybackStopped(object sender, StoppedEventArgs e)
+    {
+        // Check if the audio stopped due to reaching its end and not because of an error or manual stop
+        if (e.Exception == null && !isStopped)
+        {
+            audioStream.Position = 0;
+            waveOutDevice.Play();
+        }
+    }
+
+    public void StopPlayback()
+    {
+        isStopped = true;
+        waveOutDevice.Stop();
+        // bufferedWaveProvider.ClearBuffer();
+        waveOutDevice.PlaybackStopped -= WaveOutDevice_PlaybackStopped;
+    }
+
+    private void InitializeEqualizer(ISampleProvider sampleProvider)
+    {
+        bands = new EqualizerBand[]
+        {
+        new EqualizerBand { Frequency = 530, Gain = 0.0f, Bandwidth = 0.8f },
+        new EqualizerBand { Frequency = 800, Gain = 0.0f, Bandwidth = 0.8f }
+        };
+        equalizer = new Equalizer(sampleProvider, bands);
+    }
+
+    private void ApplyBoost530Hz()
+    {
+        var band = bands.FirstOrDefault(b => b.Frequency == 530);
+        if (band != null)
+        {
+            band.Gain = 12.0f;
+        }
+        // Reset the other band
+        bands.FirstOrDefault(b => b.Frequency == 800).Gain = 0.0f;
+        equalizer.Update();
+    }
+
+    private void ApplyBoost800Hz()
+    {
+        var band = bands.FirstOrDefault(b => b.Frequency == 800);
+        if (band != null)
+        {
+            band.Gain = 12.0f;
+        }
+        // Reset the other band
+        bands.FirstOrDefault(b => b.Frequency == 530).Gain = 0.0f;
+        equalizer.Update();
+    }
+}

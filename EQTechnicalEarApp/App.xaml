@@ -2,7 +2,59 @@
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:EQTechnicalEarApp"
+             xmlns:pages="clr-namespace:EQTechnicalEarApp.Pages"
              x:Class="EQTechnicalEarApp.App">
+    <Application.MainPage>
+        <Shell>
+            <TabBar>
+                <Tab Title="Practice">
+                    <ShellContent Title="Practice">
+                        <ShellContent.ContentTemplate>
+                            <DataTemplate>
+                                <ContentPage>
+                                    <BlazorWebView HostPage="wwwroot/index.html">
+                                        <BlazorWebView.RootComponents>
+                                            <RootComponent Selector="#app" ComponentType="{x:Type pages:Practice}" />
+                                        </BlazorWebView.RootComponents>
+                                    </BlazorWebView>
+                                </ContentPage>
+                            </DataTemplate>
+                        </ShellContent.ContentTemplate>
+                    </ShellContent>
+                </Tab>
+                <Tab Title="Quiz">
+                    <ShellContent Title="Quiz">
+                        <ShellContent.ContentTemplate>
+                            <DataTemplate>
+                                <ContentPage>
+                                    <BlazorWebView HostPage="wwwroot/index.html">
+                                        <BlazorWebView.RootComponents>
+                                            <RootComponent Selector="#app" ComponentType="{x:Type pages:Quiz}" />
+                                        </BlazorWebView.RootComponents>
+                                    </BlazorWebView>
+                                </ContentPage>
+                            </DataTemplate>
+                        </ShellContent.ContentTemplate>
+                    </ShellContent>
+                </Tab>
+                <Tab Title="Settings">
+                    <ShellContent Title="Settings">
+                        <ShellContent.ContentTemplate>
+                            <DataTemplate>
+                                <ContentPage>
+                                    <BlazorWebView HostPage="wwwroot/index.html">
+                                        <BlazorWebView.RootComponents>
+                                            <RootComponent Selector="#app" ComponentType="{x:Type pages:Settings}" />
+                                        </BlazorWebView.RootComponents>
+                                    </BlazorWebView>
+                                </ContentPage>
+                            </DataTemplate>
+                        </ShellContent.ContentTemplate>
+                    </ShellContent>
+                </Tab>
+            </TabBar>
+        </Shell>
+    </Application.MainPage>
     <Application.Resources>
         <ResourceDictionary>
 
