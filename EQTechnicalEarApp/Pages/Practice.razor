@@ -1,134 +1,183 @@
-﻿@page "/practice"
+﻿@inject IJSRuntime JSRuntime
 
-@using NAudio.Dsp;
-@using NAudio.Wave;
-@using NAudio.Wave.SampleProviders;
-@using NAudio.Extras;
+<div class="container">
 
-<div class="form-check">
-    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" @onchange="ApplyBoost530Hz">
-    <label class="form-check-label" for="flexRadioDefault1">
-        Boost 12db at 530Hz
-    </label>
-</div>
-<div class="form-check">
-    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" @onchange="ApplyBoost800Hz">
-    <label class="form-check-label" for="flexRadioDefault2">
-        Boost 12db at 800Hz
-    </label>
+    <div class="row mb-4 mt-4">
+        <div class="col col-sm-12">
+
+            <div class="mb-4 mt-2 card-wrapper">
+                <div class="row d-flex align-items-center">
+                    <div class="col">
+                        <button class="svg-button" @onclick="ToggleAudioPlayback">
+                            <svg height="900px" width="900px" viewBox="0 0 512 512" version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                            <g id="_x37_17-_next__x2C__arrow__x2C__right_arrow__x2C__direction__x2C_">
+                            <g>
+                            <path d="M146.662,26.814L358.221,238.27c10.755,10.222,10.755,26.193,0,36.414L146.662,486.139" style="fill:none;stroke:@(IsPlaying ? "#FE5A5A" : "white");stroke-width:14;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:2.6131;" />
+                            </g>
+                            </g>
+                            <g id="Layer_1" />
+                            </svg>
+                        </button>
+                        <button class="btn btn-lg @(IsEQ ? "btn-eq btn-eq-selected" : "btn-eq")" @onclick="ToggleEq">EQ</button>
+                    </div>
+                </div>
+            </div>
+           
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col col-sm-12">
+            <div class="mb-4 mt-2">
+                <div class="practice-section-heading">
+                    <h4>Frequency</h4>
+                </div>
+                <div class="row mb-4">
+                    <div class="col col-sm-12">
+                        <div class="btn-group btn-toolbar" role="group">
+                            @foreach (var frequency in OneOctaveFrequencies)
+                            {
+                                FrequencyCount++;
+                                <input type="radio" class="btn-check" name="peakingFrequencyBtnRadio" id="peakingFrequencyBtnRadio_@FrequencyCount" autocomplete="off" @onclick="(() => ApplyPeakingFilter(frequency, Gain))">
+                                <label class="btn btn-lg mb-2 @(Frequency == frequency ? "btn-selected" : "btn-outline-light")" for="peakingFrequencyBtnRadio_@FrequencyCount">@frequency</label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col col-sm-12">
+            <div class="mb-4 mt-2">
+                <div class="practice-section-heading">
+                    <h4>Gain</h4>
+                </div>
+                <div class="row mb-4">
+                    <div class="col col-sm-12">
+                        <div class="btn-group btn-toolbar" role="group">
+                            @foreach (var gain in EasyGainArray)
+                            {
+                                GainCount++;
+                                <input type="radio" class="btn-check" name="peakingGainBtnRadio" id="peakingGainBtnRadio_@GainCount" autocomplete="off" @onclick="(() => ApplyPeakingFilter(Frequency, gain))">
+                                <label class="btn btn-lg @(Gain == gain ? "btn-selected" : "btn-outline-light")" for="peakingGainBtnRadio_@GainCount">@gain dB</label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div> 
-    <button class="btn btn-primary" @onclick="StartRealtimeProcessing">Start</button>
-</div>
+<style>
+    .card-wrapper {
+        padding: 1rem 0.5rem;
+        border-radius: 15px;
+        /* background-color: #7E7E8B; */
+        border: 1px #7E7E8B solid;
 
-<div> 
-    <button class="btn btn-primary" @onclick="StopPlayback">Stop</button>
-</div>
+    }
+
+    .btn-eq-selected {
+        background-color: #FE5A5A !important;
+        color: white !important;
+        border-color: #373F4C !important;
+    }
+
+    .btn-eq {
+        width: 4.7rem;
+        height: 4.7rem;
+        border-color: white !important;
+        color: white !important;
+    }
+
+    .btn-selected {
+        background-color: #FE5A5A !important;
+        color: white !important;
+    }
+
+    .btn-eq-selected:hover {
+        background-color: #FE5A5A;
+    }
+
+    .practice-section-heading {
+        color: white;
+        padding-bottom: 0.5rem;
+    }
+</style>
 
 @code {
-    private Stream audioStream;
-    private BufferedWaveProvider bufferedWaveProvider;
-    private IWavePlayer waveOutDevice;
-    private Equalizer equalizer;
-    private EqualizerBand[] bands;
-    private VolumeWaveProvider16 volumeProvider;
-    private bool isStopped = false;
+    private bool IsPlaying = false;
+    private bool IsEQ = false;
+    private int Frequency = 10;
+    private int Gain = 0;
+    private int MinFrequency = 10;
+    private int MinGain = 0;
+    private int FrequencyCount = 0;
+    private int GainCount = 0;
+    private List<int> OneOctaveFrequencies = new List<int> { 125, 250, 500, 1000, 2000, 4000, 8000 };
+    private List<int> EasyGainArray = new List<int> { -12, -9, 9, 12 };
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("loadSamplesIntoBuffer");
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+    }
+
+    private async Task ToggleAudioPlayback()
     {
         try
         {
-            audioStream = await FileSystem.OpenAppPackageFileAsync("sample.wav");
+            if (!IsPlaying)
+            {
+                //only apply frequency and gain if EQ is toggled on, otherwise apply min inaudible EQ values
+                var frequency = IsEQ ? Frequency : MinFrequency;
+                var gain = IsEQ ? Gain : MinGain;
+
+                await JSRuntime.InvokeVoidAsync("playAudio", frequency, gain);
+                IsPlaying = true;
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("stopAudio");
+                IsPlaying = false;
+            }
         }
-        catch (FileNotFoundException ex)
+        catch (Exception ex)
         {
         }
     }
 
-    public void StartRealtimeProcessing()
+    private async Task ApplyPeakingFilter(int frequency, int gain)
     {
-        if (audioStream == null || !audioStream.CanRead)
+        Frequency = frequency;
+        Gain = gain;
+
+        // only apply filter if the playback is on and EQ is switched on
+        if (IsPlaying && IsEQ)
         {
-            audioStream = Task.Run(async () => await FileSystem.OpenAppPackageFileAsync("sample.wav")).Result;
-        }
-        audioStream.Position = 0;
-
-        var wavReader = new WaveFileReader(audioStream);
-        var sampleChannel = new SampleChannel(wavReader);
-
-        InitializeEqualizer(sampleChannel);
-
-        // Set up the BufferedWaveProvider
-        bufferedWaveProvider = new BufferedWaveProvider(wavReader.WaveFormat);
-
-        volumeProvider = new VolumeWaveProvider16(equalizer.ToWaveProvider16());
-
-        // WaveOutEvent is a suitable output device on most systems
-        waveOutDevice = new WaveOutEvent();
-        waveOutDevice.PlaybackStopped += WaveOutDevice_PlaybackStopped;
-
-        waveOutDevice.Init(volumeProvider);
-
-        volumeProvider.Volume = 0.7f;
-        waveOutDevice.Play();
-        isStopped = false;
-    }
-
-    public void SetVolume(float volume) // volume should be between 0.0f (silent) and 1.0f (full volume)
-    {
-        volumeProvider.Volume = volume;
-    }
-
-    private void WaveOutDevice_PlaybackStopped(object sender, StoppedEventArgs e)
-    {
-        // Check if the audio stopped due to reaching its end and not because of an error or manual stop
-        if (e.Exception == null && !isStopped)
-        {
-            audioStream.Position = 0;
-            waveOutDevice.Play();
+            await JSRuntime.InvokeVoidAsync("applyPeakingFilter", frequency, gain);
         }
     }
 
-    public void StopPlayback()
+    private async Task ToggleEq()
     {
-        isStopped = true;
-        waveOutDevice.Stop();
-        // bufferedWaveProvider.ClearBuffer();
-        waveOutDevice.PlaybackStopped -= WaveOutDevice_PlaybackStopped;
-    }
-
-    private void InitializeEqualizer(ISampleProvider sampleProvider)
-    {
-        bands = new EqualizerBand[]
+        IsEQ = !IsEQ;
+        if (IsPlaying)
         {
-        new EqualizerBand { Frequency = 530, Gain = 0.0f, Bandwidth = 0.8f },
-        new EqualizerBand { Frequency = 800, Gain = 0.0f, Bandwidth = 0.8f }
-        };
-        equalizer = new Equalizer(sampleProvider, bands);
-    }
-
-    private void ApplyBoost530Hz()
-    {
-        var band = bands.FirstOrDefault(b => b.Frequency == 530);
-        if (band != null)
-        {
-            band.Gain = 12.0f;
+            var frequency = IsEQ ? Frequency : MinFrequency;
+            var gain = IsEQ ? Gain : MinGain;
+            await JSRuntime.InvokeVoidAsync("toggleEq", frequency, gain);
         }
-        // Reset the other band
-        bands.FirstOrDefault(b => b.Frequency == 800).Gain = 0.0f;
-        equalizer.Update();
-    }
-
-    private void ApplyBoost800Hz()
-    {
-        var band = bands.FirstOrDefault(b => b.Frequency == 800);
-        if (band != null)
-        {
-            band.Gain = 12.0f;
-        }
-        // Reset the other band
-        bands.FirstOrDefault(b => b.Frequency == 530).Gain = 0.0f;
-        equalizer.Update();
     }
 }

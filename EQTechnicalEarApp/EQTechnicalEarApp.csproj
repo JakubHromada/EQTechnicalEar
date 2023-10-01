@@ -51,12 +51,30 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Content Remove="compilerconfig.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <MauiAsset Remove="Resources\Raw\sampleAndroid.wav" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Remove="Resources\AppIcon\appiconfg.svg" />
-      <None Remove="Resources\Raw\sample.wav" />
+      <None Remove="Resources\Images\practice_tab_icon.svg" />
+      <None Remove="Resources\Images\quiz_tab_icon.svg" />
+      <None Remove="Resources\Images\settings_tab_icon.svg" />
+      <None Remove="Resources\Raw\sampleAndroid.wav" />
       <None Remove="Resources\Splash\splash.png" />
     </ItemGroup>
 
     <ItemGroup>
+      <AndroidResource Include="Resources\Raw\sampleAndroid.wav" />
+      <Content Include="Styles\_variables.scss" />
+      <MauiAsset Include="wwwroot\flute.wav" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Maui" Version="6.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
         <PackageReference Include="NAudio" Version="2.2.1" />
         <PackageReference Include="NAudio.Extras" Version="2.2.1" />
@@ -65,6 +83,21 @@
 
     <ItemGroup>
       <Folder Include="Shared\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="compilerconfig.json" />
+      <None Include="wwwroot\css\bootstrap\bootstrap.min.css" />
+      <None Include="wwwroot\css\bootstrap\bootstrap.min.css.map" />
+      <None Include="wwwroot\css\open-iconic\FONT-LICENSE" />
+      <None Include="wwwroot\css\open-iconic\font\css\open-iconic-bootstrap.min.css" />
+      <None Include="wwwroot\css\open-iconic\font\fonts\open-iconic.eot" />
+      <None Include="wwwroot\css\open-iconic\font\fonts\open-iconic.otf" />
+      <None Include="wwwroot\css\open-iconic\font\fonts\open-iconic.svg" />
+      <None Include="wwwroot\css\open-iconic\font\fonts\open-iconic.ttf" />
+      <None Include="wwwroot\css\open-iconic\font\fonts\open-iconic.woff" />
+      <None Include="wwwroot\css\open-iconic\ICON-LICENSE" />
+      <None Include="wwwroot\css\open-iconic\README.md" />
     </ItemGroup>
 
 </Project>
